@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:todo_app/constants/colors.dart';
 import 'package:todo_app/model/todo.dart';
-import 'package:todo_app/widgets/search_input_widget.dart';
+import 'package:todo_app/widgets/search_input.dart';
 import 'package:todo_app/widgets/todo_item.dart';
 
 class Home extends StatefulWidget {
@@ -13,17 +13,13 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   final todosList = ToDo.todoList();
+  List<ToDo> foundToDo = [];
+  final _todoController = TextEditingController();
 
-  void onListTap(ToDo todo) {
-    setState(() {
-      todo.isDone = !todo.isDone;
-    });
-  }
-
-  void onDeleteTap(String id) {
-    setState(() {
-      todosList.removeWhere((item) => item.id == id);
-    });
+  @override
+  void initState() {
+    foundToDo = todosList;
+    super.initState();
   }
 
   @override
@@ -40,7 +36,7 @@ class _HomeState extends State<Home> {
             ),
             child: Column(
               children: [
-                const SearchInput(),
+                SearchInput(searchToDo: searchToDo),
                 Expanded(
                   child: ListView(
                     children: [
@@ -57,7 +53,7 @@ class _HomeState extends State<Home> {
                           ),
                         ),
                       ),
-                      for (ToDo todo in todosList)
+                      for (ToDo todo in foundToDo.reversed)
                         ToDoItem(
                             todo: todo,
                             onDeleteTap: onDeleteTap,
@@ -95,8 +91,9 @@ class _HomeState extends State<Home> {
                       ],
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const TextField(
-                      decoration: InputDecoration(
+                    child: TextField(
+                      controller: _todoController,
+                      decoration: const InputDecoration(
                         hintText: 'Add a new todo item',
                         border: InputBorder.none,
                       ),
@@ -109,7 +106,7 @@ class _HomeState extends State<Home> {
                     right: 20,
                   ),
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () => addToDoItem(_todoController.text),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: tdBlue,
                       minimumSize: const Size(60, 55),
@@ -129,6 +126,46 @@ class _HomeState extends State<Home> {
         ],
       ),
     );
+  }
+
+  void onListTap(ToDo todo) {
+    setState(() {
+      todo.isDone = !todo.isDone;
+    });
+  }
+
+  void onDeleteTap(String id) {
+    setState(() {
+      todosList.removeWhere((item) => item.id == id);
+    });
+  }
+
+  void addToDoItem(String toDo) {
+    setState(() {
+      todosList.add(
+        ToDo(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          todoText: toDo,
+        ),
+      );
+    });
+    _todoController.clear();
+  }
+
+  void searchToDo(String enteredKeyword) {
+    List<ToDo> results = [];
+    if (enteredKeyword.isEmpty) {
+      results = todosList;
+    } else {
+      results = todosList
+          .where((item) => item.todoText!
+              .toLowerCase()
+              .contains(enteredKeyword.toLowerCase()))
+          .toList();
+    }
+    setState(() {
+      foundToDo = results;
+    });
   }
 
   AppBar buildAppBar() {

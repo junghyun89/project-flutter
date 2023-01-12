@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:todo_app/constants/colors.dart';
 
 class SearchInput extends StatelessWidget {
+  final Function searchToDo;
   const SearchInput({
     Key? key,
+    required this.searchToDo,
   }) : super(key: key);
 
   @override
@@ -16,8 +18,9 @@ class SearchInput extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: const TextField(
-        decoration: InputDecoration(
+      child: TextField(
+        onChanged: (value) => searchToDo(value),
+        decoration: const InputDecoration(
           contentPadding: EdgeInsets.all(0),
           prefixIcon: Icon(
             Icons.search,
