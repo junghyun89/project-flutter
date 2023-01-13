@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:tictactoe_game/constants/colors.dart';
@@ -12,7 +14,17 @@ class GameScreen extends StatefulWidget {
 class _GameScreenState extends State<GameScreen> {
   bool oTurn = true;
   List<String> displayXO = ['', '', '', '', '', '', '', '', ''];
+  List<int> matchedIndexes = [];
+  int attempts = 0;
+  int oScore = 0;
+  int xScore = 0;
+  int filledBoxed = 0;
+  bool winnerFound = false;
   String resultDeclaration = '';
+
+  static const maxSeconds = 30;
+  int seconds = maxSeconds;
+  Timer? timer;
   static var customFontWhite = GoogleFonts.ubuntu(
     textStyle: const TextStyle(
       color: Colors.white,
@@ -20,6 +32,27 @@ class _GameScreenState extends State<GameScreen> {
       fontSize: 28,
     ),
   );
+
+  void startTimer() {
+    timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      setState(() {
+        if (seconds > 0) {
+          seconds--;
+        } else {
+          stopTimer();
+        }
+      });
+    });
+  }
+
+  void stopTimer() {
+    timer?.cancel();
+    resetTimer();
+  }
+
+  void resetTimer() {
+    seconds = maxSeconds;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,9 +62,44 @@ class _GameScreenState extends State<GameScreen> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            const Expanded(
+            Expanded(
               flex: 1,
-              child: Text('Score Board'),
+              child: Container(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          'Player O',
+                          style: customFontWhite,
+                        ),
+                        Text(
+                          oScore.toString(),
+                          style: customFontWhite,
+                        )
+                      ],
+                    ),
+                    const SizedBox(
+                      width: 20,
+                    ),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          'Player X',
+                          style: customFontWhite,
+                        ),
+                        Text(
+                          xScore.toString(),
+                          style: customFontWhite,
+                        )
+                      ],
+                    )
+                  ],
+                ),
+              ),
             ),
             Expanded(
               flex: 5,
@@ -52,7 +120,9 @@ class _GameScreenState extends State<GameScreen> {
                           width: 5,
                           color: MainColor.primaryColor,
                         ),
-                        color: MainColor.secondaryColor,
+                        color: matchedIndexes.contains(index)
+                            ? MainColor.accentColor
+                            : MainColor.secondaryColor,
                       ),
                       child: Center(
                         child: Text(
@@ -61,7 +131,9 @@ class _GameScreenState extends State<GameScreen> {
                             textStyle: TextStyle(
                               fontSize: 64,
                               fontWeight: FontWeight.w500,
-                              color: MainColor.primaryColor,
+                              color: matchedIndexes.contains(index)
+                                  ? MainColor.secondaryColor
+                                  : MainColor.primaryColor,
                             ),
                           ),
                         ),
@@ -73,9 +145,20 @@ class _GameScreenState extends State<GameScreen> {
             ),
             Expanded(
               flex: 2,
-              child: Text(
-                resultDeclaration,
-                style: customFontWhite,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      resultDeclaration,
+                      style: customFontWhite,
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    _buildTimer()
+                  ],
+                ),
               ),
             ),
           ],
@@ -84,16 +167,72 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
+  Widget _buildTimer() {
+    final isRunning = timer == null ? false : timer!.isActive;
+    return isRunning
+        ? SizedBox(
+            width: 100,
+            height: 100,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                CircularProgressIndicator(
+                  value: 1 - seconds / maxSeconds,
+                  valueColor: const AlwaysStoppedAnimation(Colors.white),
+                  strokeWidth: 8,
+                  backgroundColor: MainColor.accentColor,
+                ),
+                Center(
+                  child: Text(
+                    '$seconds',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontSize: 50,
+                    ),
+                  ),
+                )
+              ],
+            ),
+          )
+        : ElevatedButton(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 16,
+                )),
+            onPressed: () {
+              startTimer();
+              _clearBoard();
+              attempts++;
+            },
+            child: Text(
+              attempts == 0 ? 'Start' : 'Play Again!',
+              style: const TextStyle(
+                fontSize: 20,
+                color: Colors.black,
+              ),
+            ),
+          );
+  }
+
   void _tapped(int index) {
-    setState(() {
-      if (oTurn && displayXO[index] == '') {
-        displayXO[index] = 'O';
-      } else if (!oTurn && displayXO[index] == '') {
-        displayXO[index] = 'X';
-      }
-      oTurn = !oTurn;
-      _checkWinner();
-    });
+    final isRunning = timer == null ? false : timer!.isActive;
+
+    if (isRunning) {
+      setState(() {
+        if (oTurn && displayXO[index] == '') {
+          displayXO[index] = 'O';
+          filledBoxed++;
+        } else if (!oTurn && displayXO[index] == '') {
+          displayXO[index] = 'X';
+          filledBoxed++;
+        }
+        oTurn = !oTurn;
+        _checkWinner();
+      });
+    }
   }
 
   void _checkWinner() {
@@ -102,9 +241,9 @@ class _GameScreenState extends State<GameScreen> {
         displayXO[0] != '') {
       setState(() {
         resultDeclaration = 'Player ${displayXO[0]} Wins!';
-        // matchedIndexes.addAll([0, 1, 2]);
-        // stopTimer();
-        // _updateScore(displayXO[0]);
+        matchedIndexes.addAll([0, 1, 2]);
+        stopTimer();
+        _updateScore(displayXO[0]);
       });
     }
 
@@ -113,9 +252,9 @@ class _GameScreenState extends State<GameScreen> {
         displayXO[3] != '') {
       setState(() {
         resultDeclaration = 'Player ${displayXO[3]} Wins!';
-        // matchedIndexes.addAll([3, 4, 5]);
-        // stopTimer();
-        // _updateScore(displayXO[3]);
+        matchedIndexes.addAll([3, 4, 5]);
+        stopTimer();
+        _updateScore(displayXO[3]);
       });
     }
 
@@ -124,9 +263,9 @@ class _GameScreenState extends State<GameScreen> {
         displayXO[6] != '') {
       setState(() {
         resultDeclaration = 'Player ${displayXO[6]} Wins!';
-        // matchedIndexes.addAll([6, 7, 8]);
-        // stopTimer();
-        // _updateScore(displayXO[6]);
+        matchedIndexes.addAll([6, 7, 8]);
+        stopTimer();
+        _updateScore(displayXO[6]);
       });
     }
 
@@ -135,9 +274,9 @@ class _GameScreenState extends State<GameScreen> {
         displayXO[0] != '') {
       setState(() {
         resultDeclaration = 'Player ${displayXO[0]} Wins!';
-        // matchedIndexes.addAll([0, 3, 6]);
-        // stopTimer();
-        // _updateScore(displayXO[0]);
+        matchedIndexes.addAll([0, 3, 6]);
+        stopTimer();
+        _updateScore(displayXO[0]);
       });
     }
 
@@ -146,9 +285,9 @@ class _GameScreenState extends State<GameScreen> {
         displayXO[1] != '') {
       setState(() {
         resultDeclaration = 'Player ${displayXO[1]} Wins!';
-        // matchedIndexes.addAll([1, 4, 7]);
-        // stopTimer();
-        // _updateScore(displayXO[1]);
+        matchedIndexes.addAll([1, 4, 7]);
+        stopTimer();
+        _updateScore(displayXO[1]);
       });
     }
 
@@ -157,9 +296,9 @@ class _GameScreenState extends State<GameScreen> {
         displayXO[2] != '') {
       setState(() {
         resultDeclaration = 'Player ${displayXO[2]} Wins!';
-        // matchedIndexes.addAll([2, 5, 8]);
-        // stopTimer();
-        // _updateScore(displayXO[2]);
+        matchedIndexes.addAll([2, 5, 8]);
+        stopTimer();
+        _updateScore(displayXO[2]);
       });
     }
 
@@ -168,9 +307,9 @@ class _GameScreenState extends State<GameScreen> {
         displayXO[0] != '') {
       setState(() {
         resultDeclaration = 'Player ${displayXO[0]} Wins!';
-        // matchedIndexes.addAll([0, 4, 8]);
-        // stopTimer();
-        // _updateScore(displayXO[0]);
+        matchedIndexes.addAll([0, 4, 8]);
+        stopTimer();
+        _updateScore(displayXO[0]);
       });
     }
 
@@ -179,10 +318,37 @@ class _GameScreenState extends State<GameScreen> {
         displayXO[6] != '') {
       setState(() {
         resultDeclaration = 'Player ${displayXO[6]} Wins!';
-        // matchedIndexes.addAll([6, 4, 2]);
-        // stopTimer();
-        // _updateScore(displayXO[6]);
+        matchedIndexes.addAll([6, 4, 2]);
+        stopTimer();
+        _updateScore(displayXO[6]);
       });
     }
+    if (!winnerFound && filledBoxed == 9) {
+      setState(() {
+        resultDeclaration = 'Nobody Wins!';
+        stopTimer();
+      });
+    }
+  }
+
+  void _updateScore(String winner) {
+    if (winner == 'O') {
+      oScore++;
+    } else if (winner == 'X') {
+      xScore++;
+    }
+    winnerFound = true;
+  }
+
+  void _clearBoard() {
+    setState(() {
+      for (int i = 0; i < 9; i++) {
+        displayXO[i] = '';
+      }
+      resultDeclaration = '';
+    });
+    filledBoxed = 0;
+    matchedIndexes = [];
+    winnerFound = false;
   }
 }
