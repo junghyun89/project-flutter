@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:habit_tracker_app/models/task_model.dart';
+import 'package:habit_tracker_app/screens/task_editor.dart';
 
 class MyListTile extends StatefulWidget {
   Task task;
@@ -34,10 +35,54 @@ class _MyListTileState extends State<MyListTile> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
+            ),
+            IconButton(
+              onPressed: () {
+                updateTask();
+              },
+              icon: const Icon(
+                Icons.edit,
+                color: Colors.green,
+              ),
+            ),
+            IconButton(
+              onPressed: () {
+                deleteTask();
+              },
+              icon: const Icon(
+                Icons.delete,
+                color: Colors.red,
+              ),
             )
           ],
-        )
+        ),
+        const Divider(
+          color: Colors.black87,
+          height: 20,
+          thickness: 1,
+        ),
+        Text(
+          widget.task.note!,
+          style: const TextStyle(
+            fontSize: 16,
+          ),
+        ),
       ]),
     );
+  }
+
+  void updateTask() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TaskEditor(
+          task: widget.task,
+        ),
+      ),
+    );
+  }
+
+  void deleteTask() {
+    widget.task.delete();
   }
 }

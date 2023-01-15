@@ -14,7 +14,7 @@ class Task extends HiveObject {
   DateTime? creating_date;
 
   @HiveField(3)
-  String? done;
+  bool? done;
 
   Task({this.title, this.note, this.creating_date, this.done});
 }
