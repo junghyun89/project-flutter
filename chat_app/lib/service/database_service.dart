@@ -22,9 +22,25 @@ class DatabaseService {
     });
   }
 
+  // Future savingGroupData() async {
+  //   return await groupCollection.doc().set({
+  //     "admin": '',
+  //     "groupIcon": '',
+  //     "groupName": '',
+  //     "members": [],
+  //     "recentMessage": '',
+  //     "recentMessageSender": '',
+  //     "recentMessageTime": '',
+  //   });
+  // }
+
   Future gettingUserData(String email) async {
     QuerySnapshot snapshot =
         await userCollection.where("email", isEqualTo: email).get();
     return snapshot;
+  }
+
+  getUserGroups() async {
+    return userCollection.doc(uid).snapshots();
   }
 }
