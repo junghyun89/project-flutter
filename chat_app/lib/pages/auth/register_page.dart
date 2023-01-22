@@ -108,7 +108,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       TextFormField(
                         obscureText: true,
                         decoration: textInputDecoration.copyWith(
-                          labelText: 'Passwword',
+                          labelText: 'Password',
                           prefixIcon: Icon(
                             Icons.lock,
                             color: Theme.of(context).primaryColor,

@@ -78,6 +78,23 @@ class DatabaseService {
     return groupCollection.where("groupName", isEqualTo: groupName).get();
   }
 
+  Future searchByNameTest(String groupName) async {
+    List<dynamic> groupNames = [];
+    await groupCollection.get().then((QuerySnapshot querySnapshot) {
+      for (var doc in querySnapshot.docs) {
+        groupNames.add(doc['groupName']);
+      }
+    });
+    for (var name in groupNames) {
+      if (name.indexOf(groupName) >= 0) {
+        // print(name);
+        return groupCollection.doc().get();
+      } else {
+        continue;
+      }
+    }
+  }
+
   Future<bool> isUserJoined(String groupName, String groupId) async {
     DocumentReference userDocumentReference = userCollection.doc(uid);
     DocumentSnapshot documentSnapshot = await userDocumentReference.get();
@@ -113,5 +130,14 @@ class DatabaseService {
         "members": FieldValue.arrayUnion(["${uid}_$userName"])
       });
     }
+  }
+
+  sendMessage(String groupId, Map<String, dynamic> chatMessageData) async {
+    groupCollection.doc(groupId).collection("messages").add(chatMessageData);
+    groupCollection.doc(groupId).update({
+      "recentMessage": chatMessageData['message'],
+      "recentMessageSender": chatMessageData['sender'],
+      "recentMessageTime": chatMessageData['time'].toString(),
+    });
   }
 }
