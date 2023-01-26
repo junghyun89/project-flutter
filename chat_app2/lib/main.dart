@@ -1,7 +1,23 @@
-import 'package:chat_app2/screens/main_screen.dart';
+import 'package:chat_app2/config/firebase_config.dart';
+import 'package:chat_app2/screens/login_signup_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  if (kIsWeb) {
+    await Firebase.initializeApp(
+      options: FirebaseOptions(
+        apiKey: FirebaseConfig.apiKey,
+        appId: FirebaseConfig.appId,
+        messagingSenderId: FirebaseConfig.messagingSenderId,
+        projectId: FirebaseConfig.projectId,
+      ),
+    );
+  } else {
+    await Firebase.initializeApp();
+  }
   runApp(const MyApp());
 }
 
