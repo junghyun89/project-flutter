@@ -1,7 +1,6 @@
+import 'package:chat_app2/chatting/chat/messages.dart';
+import 'package:chat_app2/chatting/chat/new_message.dart';
 import 'package:chat_app2/config/palette.dart';
-import 'package:chat_app2/screens/login_signup_screen.dart';
-import 'package:chat_app2/widgets/widget.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -44,7 +43,6 @@ class _ChatScreenState extends State<ChatScreen> {
           IconButton(
             onPressed: () {
               _authentication.signOut();
-              nextScreen(context, const LoginSignUpScreen());
             },
             icon: const Icon(
               Icons.exit_to_app,
@@ -53,32 +51,18 @@ class _ChatScreenState extends State<ChatScreen> {
           )
         ],
       ),
-      body: StreamBuilder(
-        stream: FirebaseFirestore.instance
-            .collection('chats/Ae0qJzcZ0kvJEuHuLnyc/message')
-            .snapshots(),
-        builder: (context, AsyncSnapshot snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
-          final docs = snapshot.data!.docs;
-          return ListView.builder(
-            itemCount: docs.length,
-            itemBuilder: (context, index) {
-              return Container(
-                padding: const EdgeInsets.all(8),
-                child: Text(
-                  docs[index]['text'],
-                  style: const TextStyle(
-                    fontSize: 20,
-                  ),
-                ),
-              );
-            },
-          );
+      body: GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
         },
+        child: Container(
+          child: Column(children: const [
+            Expanded(
+              child: Messages(),
+            ),
+            NewMessage(),
+          ]),
+        ),
       ),
     );
   }
