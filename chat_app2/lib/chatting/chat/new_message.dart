@@ -28,6 +28,7 @@ class _NewMessageState extends State<NewMessage> {
               controller: _controller,
               decoration: const InputDecoration(
                 labelText: 'Send a message...',
+                contentPadding: EdgeInsets.symmetric(horizontal: 8),
               ),
               onChanged: (value) {
                 setState(() {
@@ -45,13 +46,18 @@ class _NewMessageState extends State<NewMessage> {
     );
   }
 
-  _sendMessage() {
+  _sendMessage() async {
     final user = FirebaseAuth.instance.currentUser;
     FocusScope.of(context).unfocus();
+    final userData = await FirebaseFirestore.instance
+        .collection('user')
+        .doc(user!.uid)
+        .get();
     FirebaseFirestore.instance.collection('chat').add({
       'text': _enteredMessage,
       'time': Timestamp.now(),
-      'userID': user!.uid,
+      'userID': user.uid,
+      'userName': userData.data()!['userName'],
     });
     _enteredMessage = '';
     _controller.clear();
