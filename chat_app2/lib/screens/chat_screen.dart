@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:chat_app2/add_image/add_image.dart';
 import 'package:chat_app2/chatting/chat/messages.dart';
 import 'package:chat_app2/chatting/chat/new_message.dart';
@@ -19,13 +17,14 @@ class _ChatScreenState extends State<ChatScreen> {
   final _authentication = FirebaseAuth.instance;
   User? loggedUser;
   late String userName = '';
-  File? userImage;
+  late String userImage = '';
 
   @override
   void initState() {
     super.initState();
     getCurrentUser();
     getUserName();
+    getUserImage();
   }
 
   getUserName() async {
@@ -34,6 +33,20 @@ class _ChatScreenState extends State<ChatScreen> {
         .doc(loggedUser!.uid)
         .get();
     userName = userData.data()!['userName'];
+  }
+
+  getUserImage() async {
+    final userData = await FirebaseFirestore.instance
+        .collection('user')
+        .doc(loggedUser!.uid)
+        .get();
+    final imageUrl = userData.data()!['userImage'];
+    print(imageUrl);
+    if (imageUrl == null) {
+      userImage = '';
+    } else {
+      userImage = imageUrl;
+    }
   }
 
   void getCurrentUser() {
@@ -75,7 +88,7 @@ class _ChatScreenState extends State<ChatScreen> {
             CircleAvatar(
               radius: 60,
               backgroundColor: Colors.grey[700],
-              backgroundImage: userImage != null ? FileImage(userImage!) : null,
+              backgroundImage: userImage != '' ? NetworkImage(userImage) : null,
             ),
             const SizedBox(
               height: 15,
@@ -117,11 +130,11 @@ class _ChatScreenState extends State<ChatScreen> {
           FocusScope.of(context).unfocus();
         },
         child: Container(
-          child: Column(children: const [
+          child: Column(children: [
             Expanded(
               child: Messages(),
             ),
-            NewMessage(),
+            const NewMessage(),
           ]),
         ),
       ),
@@ -132,9 +145,11 @@ class _ChatScreenState extends State<ChatScreen> {
     showDialog(
       context: context,
       builder: (context) {
-        return const Dialog(
+        return Dialog(
           backgroundColor: Colors.white,
-          child: AddImage(),
+          child: AddImage(
+            loggedUser: loggedUser!,
+          ),
         );
       },
     );

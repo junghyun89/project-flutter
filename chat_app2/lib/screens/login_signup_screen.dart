@@ -1,6 +1,6 @@
 import 'package:chat_app2/config/palette.dart';
+import 'package:chat_app2/service/database_service.dart';
 import 'package:chat_app2/widgets/widget.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -543,13 +543,8 @@ class _LoginSignUpScreenState extends State<LoginSignUpScreen> {
           email: userEmail,
           password: userPassword,
         );
-        await FirebaseFirestore.instance
-            .collection('user')
-            .doc(newUser.user!.uid)
-            .set({
-          'userName': userName,
-          'email': userEmail,
-        });
+        DatabaseService(uid: newUser.user!.uid)
+            .saveUserData(userName, userEmail);
       } else if (!isSignUpScreen) {
         newUser = await _authentication.signInWithEmailAndPassword(
           email: userEmail,
