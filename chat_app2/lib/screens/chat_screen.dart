@@ -2,7 +2,7 @@ import 'package:chat_app2/add_image/add_image.dart';
 import 'package:chat_app2/chatting/chat/messages.dart';
 import 'package:chat_app2/chatting/chat/new_message.dart';
 import 'package:chat_app2/config/palette.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:chat_app2/service/database_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -16,8 +16,8 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final _authentication = FirebaseAuth.instance;
   User? loggedUser;
-  late String userName = '';
-  late String userImage = '';
+  String userName = '';
+  String? userImage = '';
 
   @override
   void initState() {
@@ -28,25 +28,19 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   getUserName() async {
-    final userData = await FirebaseFirestore.instance
-        .collection('user')
-        .doc(loggedUser!.uid)
-        .get();
-    userName = userData.data()!['userName'];
+    DatabaseService().getUserName(loggedUser!.uid).then((value) {
+      setState(() {
+        userName = value;
+      });
+    });
   }
 
   getUserImage() async {
-    final userData = await FirebaseFirestore.instance
-        .collection('user')
-        .doc(loggedUser!.uid)
-        .get();
-    final imageUrl = userData.data()!['userImage'];
-    print(imageUrl);
-    if (imageUrl == null) {
-      userImage = '';
-    } else {
-      userImage = imageUrl;
-    }
+    DatabaseService().getUserImage(loggedUser!.uid).then((value) {
+      setState(() {
+        userImage = value;
+      });
+    });
   }
 
   void getCurrentUser() {
@@ -85,10 +79,20 @@ class _ChatScreenState extends State<ChatScreen> {
             vertical: 50,
           ),
           children: [
-            CircleAvatar(
-              radius: 60,
-              backgroundColor: Colors.grey[700],
-              backgroundImage: userImage != '' ? NetworkImage(userImage) : null,
+            Center(
+              child: userImage == ''
+                  ? CircleAvatar(
+                      radius: 60,
+                      backgroundColor: Colors.grey[700],
+                    )
+                  : ClipOval(
+                      child: Image.network(
+                        userImage!,
+                        width: 140,
+                        height: 140,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
             ),
             const SizedBox(
               height: 15,
@@ -130,11 +134,11 @@ class _ChatScreenState extends State<ChatScreen> {
           FocusScope.of(context).unfocus();
         },
         child: Container(
-          child: Column(children: [
+          child: Column(children: const [
             Expanded(
               child: Messages(),
             ),
-            const NewMessage(),
+            NewMessage(),
           ]),
         ),
       ),

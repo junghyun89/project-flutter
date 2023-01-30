@@ -1,4 +1,5 @@
 import 'package:chat_app2/service/database_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_bubble/bubble_type.dart';
 import 'package:flutter_chat_bubble/chat_bubble.dart';
@@ -9,6 +10,7 @@ class ChatBubbles extends StatefulWidget {
   final String userName;
   final bool sentByMe;
   final String userID;
+  final Timestamp sentTime;
 
   const ChatBubbles({
     super.key,
@@ -16,6 +18,7 @@ class ChatBubbles extends StatefulWidget {
     required this.userName,
     required this.sentByMe,
     required this.userID,
+    required this.sentTime,
   });
 
   @override
@@ -23,32 +26,27 @@ class ChatBubbles extends StatefulWidget {
 }
 
 class _ChatBubblesState extends State<ChatBubbles> {
-  String chatUserImage = '';
+  String? chatUserImage;
 
   @override
   void initState() {
     super.initState();
     getChatUserImage();
+    time();
   }
 
-  getChatUserImage() async {
+  getChatUserImage() {
     DatabaseService().getUserImage(widget.userID).then((value) {
       setState(() {
         chatUserImage = value;
       });
     });
-    // final userData = await FirebaseFirestore.instance
-    //     .collection('user')
-    //     .doc(widget.userID)
-    //     .get();
-    // final imageUrl = userData.data()!['userImage'];
-    // setState(() {
-    //   if (imageUrl != null) {
-    //     chatUserImage = imageUrl;
-    //   } else {
-    //     chatUserImage = '';
-    //   }
-    // });
+  }
+
+  time() {
+    DateTime time =
+        DateTime.fromMillisecondsSinceEpoch(widget.sentTime.seconds * 1000);
+    return time;
   }
 
   @override
@@ -66,6 +64,7 @@ class _ChatBubblesState extends State<ChatBubbles> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
+                    Text(),
                     ChatBubble(
                       clipper: ChatBubbleClipper6(type: BubbleType.sendBubble),
                       alignment: Alignment.topRight,
@@ -97,7 +96,9 @@ class _ChatBubblesState extends State<ChatBubbles> {
                 child: Row(
                   children: [
                     CircleAvatar(
-                      backgroundImage: NetworkImage(chatUserImage),
+                      backgroundImage: chatUserImage == null
+                          ? null
+                          : NetworkImage(chatUserImage!),
                     ),
                     const SizedBox(
                       width: 4,

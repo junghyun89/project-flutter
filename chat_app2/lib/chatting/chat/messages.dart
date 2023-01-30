@@ -48,6 +48,7 @@ class _MessagesState extends State<Messages> {
                 sentByMe: chatDocs[index]['userID'].toString() == user!.uid,
                 userName: chatDocs[index]['userName'],
                 userID: chatDocs[index]['userID'],
+                sentTime: chatDocs[index]['time'],
               );
             },
           );

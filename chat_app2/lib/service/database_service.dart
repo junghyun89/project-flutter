@@ -38,6 +38,12 @@ class DatabaseService {
     return documentSnapshot['userImage'];
   }
 
+  Future getUserName(String userID) async {
+    DocumentReference d = userCollection.doc(userID);
+    DocumentSnapshot documentSnapshot = await d.get();
+    return documentSnapshot['userName'];
+  }
+
   // getUserData() async {
   //   QuerySnapshot snapshot = userCollection.where('')
   // }
