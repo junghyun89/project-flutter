@@ -3,6 +3,7 @@ import 'package:chat_app2/config/palette.dart';
 import 'package:chat_app2/service/database_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -35,17 +36,28 @@ class _AddImageState extends State<AddImage> {
                 pickedImage != null ? FileImage(pickedImage!) : null,
           ),
           const SizedBox(
-            height: 20,
+            height: 25,
+          ),
+          if (!kIsWeb)
+            OutlinedButton.icon(
+              onPressed: () {
+                _getCameraImage();
+              },
+              icon: const Icon(Icons.camera_alt),
+              label: const Text('Camera'),
+            ),
+          const SizedBox(
+            height: 10,
           ),
           OutlinedButton.icon(
             onPressed: () {
-              _pickImage();
+              _getGalleryImage();
             },
             icon: const Icon(Icons.image),
-            label: const Text('Add image'),
+            label: const Text('Gallery'),
           ),
           const SizedBox(
-            height: 30,
+            height: 20,
           ),
           TextButton.icon(
             onPressed: () {
@@ -61,7 +73,7 @@ class _AddImageState extends State<AddImage> {
     );
   }
 
-  _pickImage() async {
+  _getCameraImage() async {
     final imagePicker = ImagePicker();
     final pickedImageFile = await imagePicker.pickImage(
       source: ImageSource.camera,
@@ -73,6 +85,21 @@ class _AddImageState extends State<AddImage> {
         pickedImage = File(pickedImageFile.path);
       }
     });
+  }
+
+  _getGalleryImage() async {
+    final imagePicker = ImagePicker();
+    final pickedImageFile = await imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 50,
+      maxHeight: 150,
+    );
+
+    if (pickedImageFile != null) {
+      setState(() {
+        pickedImage = File(pickedImageFile.path);
+      });
+    }
   }
 
   addImage() async {

@@ -536,8 +536,8 @@ class _LoginSignUpScreenState extends State<LoginSignUpScreen> {
   }
 
   signUpOrLogin() async {
+    late UserCredential newUser;
     try {
-      late UserCredential newUser;
       if (isSignUpScreen) {
         newUser = await _authentication.createUserWithEmailAndPassword(
           email: userEmail,
@@ -551,23 +551,49 @@ class _LoginSignUpScreenState extends State<LoginSignUpScreen> {
           password: userPassword,
         );
       }
-      if (newUser.user != null) {
+      if (newUser.user == null) {
         setState(() {
           _isLoading = false;
         });
       }
-    } catch (e) {
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (e.code == 'email-already-in-use') {
+        showSnackBar(
+          context,
+          Colors.red,
+          'The email address is already in use by another account.',
+        );
+      } else if (e.code == 'wrong-password') {
+        showSnackBar(
+          context,
+          Colors.red,
+          'Please check your password.',
+        );
+      } else if (e.code == 'user-not-found') {
+        showSnackBar(
+          context,
+          Colors.red,
+          'There is no user record corresponding to this identifier.',
+        );
+      } else {
+        showSnackBar(
+          context,
+          Colors.red,
+          'Please check your email and password.',
+        );
+      }
       print(e);
-      showSnackBar(
-        context,
-        Colors.red,
-        'Please check your email and password.',
-      );
     }
   }
 
   String? validateEmail(value) {
-    if (value!.isEmpty || !value.contains('@')) {
+    if (!RegExp(
+            r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
+        .hasMatch(value)) {
       return 'Please enter a valid email address.';
     }
     return null;
