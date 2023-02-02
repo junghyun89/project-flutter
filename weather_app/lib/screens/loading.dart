@@ -1,8 +1,10 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:http/http.dart' as http;
+import 'package:weather_app/data/my_location.dart';
+import 'package:weather_app/data/network.dart';
+import 'package:weather_app/screens/weather_screen.dart';
+
+const apiKey = '15158171cb4853122d769e6733803088';
 
 class Loading extends StatefulWidget {
   const Loading({super.key});
@@ -12,6 +14,9 @@ class Loading extends StatefulWidget {
 }
 
 class _LoadingState extends State<Loading> {
+  late double myLatitude;
+  late double myLongitude;
+
   @override
   void initState() {
     super.initState();
@@ -40,43 +45,31 @@ class _LoadingState extends State<Loading> {
           'Location permissions are permanently denied, we cannot request permissions.');
     }
 
-    try {
-      Position position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high);
-      print(position);
-      fetchData();
-    } catch (e) {}
-  }
+    MyLocation myLocation = MyLocation();
+    await myLocation.getMyCurrentLocation();
+    myLatitude = myLocation.latitude;
+    myLongitude = myLocation.longitude;
 
-  void fetchData() async {
-    http.Response response = await http.get(Uri.parse(
-        'https://samples.openweathermap.org/data/2.5/weather?q=London&appid=b1b15e88fa797225412429c1c50c122a1'));
-    if (response.statusCode == 200) {
-      String jsonData = response.body;
-      var myJson = jsonDecode(jsonData)['weather'][0]['description'];
-      print(myJson);
-    }
+    Network network = Network(
+        'https://api.openweathermap.org/data/2.5/weather?lat=$myLatitude&lon=$myLongitude&appid=$apiKey&units=metric');
+    var weatherData = await network.getJsonData();
+    print(weatherData);
+
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) {
+          return WeatherScreen(parsedWeatherData: weatherData);
+        },
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: ElevatedButton(
-          onPressed: () {
-            // getLocation();
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blue,
-          ),
-          child: const Text(
-            'Get my location',
-            style: TextStyle(
-              color: Colors.white,
-            ),
-          ),
-        ),
-      ),
+    return const Scaffold(
+      body: Center(),
     );
   }
 }
