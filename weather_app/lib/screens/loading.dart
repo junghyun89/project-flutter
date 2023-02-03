@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:weather_app/data/my_location.dart';
-import 'package:weather_app/data/network.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:weather_app/helper/my_location.dart';
+import 'package:weather_app/helper/network.dart';
+import 'package:weather_app/helper/permission_status.dart';
 import 'package:weather_app/screens/weather_screen.dart';
 
 const apiKey = '15158171cb4853122d769e6733803088';
@@ -24,52 +25,59 @@ class _LoadingState extends State<Loading> {
   }
 
   void getLocation() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      return Future.error('Location services are disabled.');
-    }
-
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return Future.error('Location permissions are denied');
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      return Future.error(
-          'Location permissions are permanently denied, we cannot request permissions.');
-    }
+    PermissionStatus permissionStatus = PermissionStatus();
+    permissionStatus.checkStatus();
 
     MyLocation myLocation = MyLocation();
     await myLocation.getMyCurrentLocation();
     myLatitude = myLocation.latitude;
     myLongitude = myLocation.longitude;
 
-    Network network = Network(
-        'https://api.openweathermap.org/data/2.5/weather?lat=$myLatitude&lon=$myLongitude&appid=$apiKey&units=metric');
-    var weatherData = await network.getJsonData();
-    print(weatherData);
+    var weatherData = await getWeatherData();
+    var airData = await getAirData();
 
     if (!mounted) return;
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) {
-          return WeatherScreen(parsedWeatherData: weatherData);
+          return WeatherScreen(
+            parsedWeatherData: weatherData,
+            parsedAirData: airData,
+          );
         },
       ),
     );
   }
 
+  Future<dynamic> getWeatherData() async {
+    Network network = Network(
+      'https://api.openweathermap.org/data/2.5/weather?lat=$myLatitude&lon=$myLongitude&appid=$apiKey&units=metric',
+    );
+    var weatherData = await network.getJsonData();
+    print(weatherData);
+    return weatherData;
+  }
+
+  Future<dynamic> getAirData() async {
+    Network network = Network(
+      'https://api.openweathermap.org/data/2.5/air_pollution?lat=$myLatitude&lon=$myLongitude&appid=$apiKey',
+    );
+    var airData = await network.getJsonData();
+    print(airData);
+    return airData;
+  }
+
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      body: Center(),
+      backgroundColor: Colors.black38,
+      body: Center(
+        child: SpinKitDoubleBounce(
+          color: Colors.white,
+          size: 80.0,
+        ),
+      ),
     );
   }
 }

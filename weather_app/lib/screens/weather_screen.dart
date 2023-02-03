@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:timer_builder/timer_builder.dart';
+import 'package:weather_app/model/model.dart';
 
 class WeatherScreen extends StatefulWidget {
-  final parsedWeatherData;
+  final dynamic parsedWeatherData;
+  final dynamic parsedAirData;
   const WeatherScreen({
     super.key,
     required this.parsedWeatherData,
+    required this.parsedAirData,
   });
 
   @override
@@ -18,18 +20,39 @@ class WeatherScreen extends StatefulWidget {
 class _WeatherScreenState extends State<WeatherScreen> {
   late String cityName;
   late int tempInt;
+  late String description;
+  late Widget weatherIcon;
+  late Widget airIcon;
+  late Widget airStatus;
+  double fineDust = 0;
+  double ultraFineDust = 0;
+  Model model = Model();
   var date = DateTime.now();
 
   @override
   void initState() {
     super.initState();
-    updateData(widget.parsedWeatherData);
+    updateWeatherData(widget.parsedWeatherData);
+    updateAirData(widget.parsedAirData);
   }
 
-  void updateData(dynamic weatherData) {
+  updateWeatherData(dynamic weatherData) {
     double tempDouble = weatherData['main']['temp'];
+    int condition = weatherData['weather'][0]['id'];
+
     cityName = weatherData['name'];
+    description = weatherData['weather'][0]['description'];
     tempInt = tempDouble.round();
+    weatherIcon = model.getWeatherIcon(condition);
+  }
+
+  updateAirData(dynamic airData) {
+    int index = airData['list'][0]['main']['aqi'];
+
+    airIcon = model.getAirIcon(index);
+    airStatus = model.getAirCondition(index);
+    ultraFineDust = airData['list'][0]['components']['pm2_5'];
+    fineDust = airData['list'][0]['components']['pm10'];
   }
 
   String getSystemTime() {
@@ -137,15 +160,12 @@ class _WeatherScreenState extends State<WeatherScreen> {
                               ),
                               Row(
                                 children: [
-                                  SvgPicture.asset(
-                                    'svg/climacon-sun.svg',
-                                    color: Colors.white,
-                                  ),
+                                  weatherIcon,
                                   const SizedBox(
                                     width: 10.0,
                                   ),
                                   Text(
-                                    'clear sky',
+                                    description,
                                     style: GoogleFonts.ubuntu(
                                       fontSize: 16.0,
                                       color: Colors.white,
@@ -180,22 +200,11 @@ class _WeatherScreenState extends State<WeatherScreen> {
                                 const SizedBox(
                                   height: 10.0,
                                 ),
-                                Image.asset(
-                                  'image/bad.png',
-                                  width: 37.0,
-                                  height: 35.0,
-                                ),
+                                airIcon,
                                 const SizedBox(
                                   height: 10.0,
                                 ),
-                                Text(
-                                  '"매우 나쁨"',
-                                  style: GoogleFonts.ubuntu(
-                                    fontSize: 16,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                                airStatus,
                               ],
                             ),
                             Column(
@@ -211,7 +220,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
                                   height: 10.0,
                                 ),
                                 Text(
-                                  '174.75',
+                                  '$fineDust',
                                   style: GoogleFonts.ubuntu(
                                     fontSize: 24.0,
                                     color: Colors.white,
@@ -243,7 +252,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
                                   height: 10.0,
                                 ),
                                 Text(
-                                  '84.03',
+                                  '$ultraFineDust',
                                   style: GoogleFonts.ubuntu(
                                     fontSize: 24.0,
                                     color: Colors.white,
