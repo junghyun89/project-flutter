@@ -17,3 +17,11 @@ showSnackBar(BuildContext context, String text) {
     ),
   );
 }
+
+nextScreen(BuildContext context, page) {
+  Navigator.of(context).push(
+    MaterialPageRoute(
+      builder: (context) => page,
+    ),
+  );
+}
