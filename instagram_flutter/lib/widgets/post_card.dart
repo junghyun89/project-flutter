@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:instagram_flutter/models/user.dart' as model;
 import 'package:instagram_flutter/providers/user_provider.dart';
+import 'package:instagram_flutter/resources/firestore_methods.dart';
 import 'package:instagram_flutter/screens/comments_screen.dart';
 import 'package:instagram_flutter/utils/colors.dart';
 import 'package:instagram_flutter/utils/global_variable.dart';
@@ -238,7 +239,7 @@ class _PostCardState extends State<PostCard> {
                       child: Text(e),
                     ),
                     onTap: () {
-                      deletePost();
+                      deletePost(widget.snap['postId'].toString());
                       Navigator.of(context).pop();
                     },
                   ),
@@ -252,5 +253,11 @@ class _PostCardState extends State<PostCard> {
 
   fetchCommentLen() {}
 
-  deletePost() {}
+  deletePost(String postId) async {
+    try {
+      await FireStoreMethods().deletePost(postId);
+    } catch (e) {
+      showSnackBar(context, e.toString());
+    }
+  }
 }
