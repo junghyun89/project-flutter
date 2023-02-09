@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:instagram_flutter/models/user.dart' as model;
 import 'package:instagram_flutter/providers/user_provider.dart';
@@ -91,7 +92,16 @@ class _PostCardState extends State<PostCard> {
             ),
           ),
           GestureDetector(
-            onDoubleTap: () {},
+            onDoubleTap: () {
+              FireStoreMethods().likePost(
+                widget.snap['postId'].toString(),
+                user.uid,
+                widget.snap['likes'],
+              );
+              setState(() {
+                isLikeAnimating = true;
+              });
+            },
             child: Stack(
               alignment: Alignment.center,
               children: [
@@ -106,16 +116,51 @@ class _PostCardState extends State<PostCard> {
                 AnimatedOpacity(
                   opacity: isLikeAnimating ? 1 : 0,
                   duration: const Duration(milliseconds: 200),
-                  child: const LikeAnimation(),
+                  child: LikeAnimation(
+                    isAnimating: isLikeAnimating,
+                    duration: const Duration(milliseconds: 400),
+                    child: const Icon(
+                      Icons.favorite,
+                      color: Colors.white,
+                      size: 100,
+                    ),
+                  ),
+                  onEnd: () {
+                    setState(() {
+                      isLikeAnimating = false;
+                    });
+                  },
                 ),
               ],
             ),
           ),
           Row(
             children: <Widget>[
-              // const LikeAnimation(),
+              LikeAnimation(
+                isAnimating: widget.snap['likes'].contains(user.uid),
+                smallLike: true,
+                child: IconButton(
+                  icon: widget.snap['likes'].contains(user.uid)
+                      ? const Icon(
+                          Icons.favorite,
+                          color: Colors.red,
+                        )
+                      : const Icon(
+                          Icons.favorite_border,
+                        ),
+                  onPressed: () => FireStoreMethods().likePost(
+                    widget.snap['postId'].toString(),
+                    user.uid,
+                    widget.snap['likes'],
+                  ),
+                ),
+              ),
               IconButton(
-                onPressed: () => nextScreen(context, const CommentsScreen()),
+                onPressed: () => nextScreen(
+                    context,
+                    CommentsScreen(
+                      postId: widget.snap['postId'],
+                    )),
                 icon: const Icon(
                   Icons.comment_outlined,
                 ),
@@ -193,7 +238,11 @@ class _PostCardState extends State<PostCard> {
                       ),
                     ),
                   ),
-                  onTap: () => nextScreen(context, const CommentsScreen()),
+                  onTap: () => nextScreen(
+                      context,
+                      CommentsScreen(
+                        postId: widget.snap['postId'],
+                      )),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -251,7 +300,19 @@ class _PostCardState extends State<PostCard> {
     );
   }
 
-  fetchCommentLen() {}
+  fetchCommentLen() async {
+    try {
+      QuerySnapshot snap = await FirebaseFirestore.instance
+          .collection('posts')
+          .doc(widget.snap['postId'])
+          .collection('comments')
+          .get();
+      commentLen = snap.docs.length;
+    } catch (e) {
+      showSnackBar(context, e.toString());
+    }
+    setState(() {});
+  }
 
   deletePost(String postId) async {
     try {
