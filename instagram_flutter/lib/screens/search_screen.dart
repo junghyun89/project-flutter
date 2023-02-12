@@ -62,7 +62,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     return InkWell(
                       onTap: () => nextScreen(
                         context,
-                        const ProfileScreen(),
+                        ProfileScreen(uid: snapshot.data!.docs[index]['uid']),
                       ),
                       child: ListTile(
                         leading: CircleAvatar(
