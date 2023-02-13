@@ -46,7 +46,7 @@ class _WebScreenLayoutState extends State<WebScreenLayout> {
         backgroundColor: mobileBackgroundColor,
         title: SvgPicture.asset(
           'assets/ic_instagram.svg',
-          color: primaryColor,
+          colorFilter: const ColorFilter.mode(primaryColor, BlendMode.srcIn),
           height: 32,
         ),
         actions: [
